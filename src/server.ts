@@ -1,7 +1,8 @@
 import { Request, Server } from 'hapi'
 
 import { ThriftPlugin } from '@creditkarma/thrift-server-hapi'
-import { IItemStatusArgs, InventoryService, ItemStatus } from './codegen/inventory'
+
+import { inventoryServiceImpl as service } from './serviceImpl'
 
 const HOST = 'localhost'
 const PORT = 3020
@@ -27,23 +28,6 @@ server.register(ThriftPlugin, (err) => {
 })
 
 /**
- * Implementation of our thrift service.
- *
- * Notice the second parameter, "context" - this is the Hapi request object,
- * passed along to our service by the Hapi thrift plugin. Thus, you have access to
- * all HTTP request data from within your service implementation.
- */
-const impl = new InventoryService.Processor({
-    get: (itemId: string, context: Request): Promise<ItemStatus> => {
-        const item = new ItemStatus({
-            itemId: '1001',
-            qty: 1,
-        })
-        return Promise.resolve(item)
-    },
-})
-
-/**
  * Route to our thrift service.
  *
  * Payload parsing is disabled - the thrift plugin parses the raw request
@@ -54,7 +38,7 @@ server.route({
     path: '/',
     handler: {
         thrift: {
-            service: impl,
+            service,
         },
     },
     config: {
