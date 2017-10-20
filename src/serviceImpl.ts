@@ -1,23 +1,28 @@
-import { IItemStatusArgs, InventoryService, ItemStatus, ItemStatusUnavailable } from './codegen/inventory'
+import { IItemStatusArgs, InventoryService, ItemStatus, ItemStatusException } from './codegen/inventory'
 
-const getItem = (itemId: string) => {
-    const data = [
-        {
-            itemId: '1001',
-            qty: 5,
-        },
-        {
-            itemId: '1002',
-            qty: 3,
-        },
-        {
-            itemId: '1010',
-            qty: 12,
-        },
-    ]
+const data = [
+    {
+        itemId: '1001',
+        qty: 5,
+    },
+    {
+        itemId: '1002',
+        qty: 3,
+    },
+    {
+        itemId: '1010',
+        qty: 12,
+    },
+].map((item) => new ItemStatus(item))
 
-    return data.find((_) => _.itemId === itemId)
-}
+const getItem = (itemId: string) =>
+    data.find((_) => _.itemId === itemId)
+
+const notFoundException = () =>
+    new ItemStatusException({
+        id: 1,
+        message: 'Not found',
+    })
 
 /**
  * Implementation of our thrift service.
@@ -31,20 +36,25 @@ export const inventoryServiceImpl = new InventoryService.Processor({
         return new Promise((resolve, reject) => {
             const item = getItem(itemId)
             if (item) {
-                resolve(new ItemStatus(item))
+                resolve(item)
             } else {
-                reject(new ItemStatusUnavailable())
+                reject(notFoundException())
             }
         })
     },
     reduce: (itemId: string, qty: number, context: Request): Promise<ItemStatus> => {
         return new Promise((resolve, reject) => {
             const item = getItem(itemId)
-            if (item) {
+            if (item && item.qty > 0) {
                 item.qty = item.qty - qty
-                resolve(new ItemStatus(item))
+                resolve(item)
+            } else if (item) {
+                reject(new ItemStatusException({
+                    id: 2,
+                    message: 'Inventory Unavailable',
+                }))
             } else {
-                reject(new ItemStatusUnavailable())
+                reject(notFoundException())
             }
         })
     },
