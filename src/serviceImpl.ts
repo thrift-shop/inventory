@@ -32,7 +32,7 @@ const notFoundException = () =>
  * all HTTP request data from within your service implementation.
  */
 export const inventoryServiceImpl = new InventoryService.Processor({
-    get: (itemId: string, context: Request): Promise<ItemStatus> => {
+    get: (itemId: string, context?: Request): Promise<ItemStatus> => {
         return new Promise((resolve, reject) => {
             const item = getItem(itemId)
             if (item) {
@@ -42,7 +42,7 @@ export const inventoryServiceImpl = new InventoryService.Processor({
             }
         })
     },
-    reduce: (itemId: string, qty: number, context: Request): Promise<ItemStatus> => {
+    reduce: (itemId: string, qty: number, context?: Request): Promise<ItemStatus> => {
         return new Promise((resolve, reject) => {
             const item = getItem(itemId)
             if (item && item.qty > 0) {
